@@ -1,0 +1,64 @@
+#!/bin/sh
+# released into the public domain, see the file 'unlicense.txt' in each release for more info
+echo -e "Github Data Export Extractor v1.0 by Alex Free\n"
+
+if [ $# -ne 2 ]; then
+	echo -e "Usage:\ngde2b <github data export tar> <output backup directory>\n\n<github data export tar> is the tar.gz file downloaded from Github.\n\n<output backup directory> is the output folder which will be created to contain your backup."
+	exit 1
+fi
+
+cd "$(dirname "$0")"
+
+if [ ! -f "$1" ]; then
+	echo -e "Error:  Can not find the source file: "$1"\nAborted!"
+elif [ -f "$1" ]; then
+	if file --mime-type "$1" | grep 'gzip' > /dev/null 2>&1; then
+		echo "Verified "$1" as a .tar.gz file"
+	else
+		echo -e "Error: "$1" is not a .tar.gz file and is unsupported! "$1" should be the .tar.gz file downloaded from Github using the export function of the website.\nAborted!"
+		exit 1
+	fi
+fi
+
+if [ -d "$2" ]; then
+	echo
+	read -p "Warning: You specified the output backup directory to be "$2" but there is an existing directory at "$2". Do you want to delete the directory "$2" and write a new one of the same name?  (Y/n): " -n 1 -r
+		
+	if [ $REPLY = "y" ] || [ $REPLY = "Y" ]; then
+		echo -e "\n\nDeleting "$2"..."
+		rm -rf "$2"
+		echo "Deleted "$2""
+	else
+		echo "Aborted!"
+		exit 1
+	fi
+fi  
+
+echo "Creating new backup directory: "$2""
+mkdir -p "$2"/repos
+mkdir "$2"/releases
+rm -rf tmp
+mkdir tmp
+echo "Extracting $1..."
+tar zxf "$1" -C tmp
+
+echo "Creating git repos..."
+for repo in tmp/repositories/*/*; do
+    if [ -d "$repo" ]; then
+		base_repo=$(basename "$repo")
+        mkdir "$2"/repos/"$base_repo"
+        git clone "$repo"  "$2"/repos/"$base_repo"
+    fi
+done
+
+echo "Copying releases..."
+for release in tmp/releases/*/*; do
+	if [ -f "$release" ]; then
+		base_release=$(basename "$release")
+		cp -v "$release" "$2"/releases/"$base_release"
+	fi
+done
+
+rm -rf tmp
+
+echo -e "\nDone! All your Github repos are at "$2"/repositories and all your released files for your Github repos are at "$2"/releases. The new directory "$2" is your backup directory."
