@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 # released into the public domain, see the file 'unlicense.txt' in each release for more info
-echo -e "Github Data Export Extractor v1.0 by Alex Free\n"
+echo -e "Github Data Export Extractor v1.0.1 by Alex Free\n"
 
 if [ $# -ne 2 ]; then
 	echo -e "Usage:\ngde2b <github data export tar> <output backup directory>\n\n<github data export tar> is the tar.gz file downloaded from Github.\n\n<output backup directory> is the output folder which will be created to contain your backup."
@@ -47,7 +47,7 @@ for repo in tmp/repositories/*/*; do
     if [ -d "$repo" ]; then
 		base_repo=$(basename "$repo")
         mkdir "$2"/repos/"$base_repo"
-        git clone "$repo"  "$2"/repos/"$base_repo"
+        git clone --recursive "$repo"  "$2"/repos/"$base_repo"
     fi
 done
 
@@ -55,7 +55,7 @@ echo "Copying releases..."
 for release in tmp/releases/*/*; do
 	if [ -f "$release" ]; then
 		base_release=$(basename "$release")
-		cp -v "$release" "$2"/releases/"$base_release"
+		cp -v --backup=t "$release" "$2"/releases/"$base_release"
 	fi
 done
 
